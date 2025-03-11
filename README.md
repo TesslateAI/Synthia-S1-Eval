@@ -100,6 +100,8 @@ To achieve optimal performance, we recommend the following settings:
     Presently, vLLM only supports static YARN, which means the scaling factor remains constant regardless of input length, **potentially impacting performance on shorter texts**. 
     We advise adding the `rope_scaling` configuration only when processing long contexts is required.
 
+6. **Other References**: For Ollama and llama.cpp users, you can consult [Unsloth's Guide](https://docs.unsloth.ai/basics/tutorial-how-to-run-qwq-32b-effectively) to see if their approach meets your needs. (Thanks to the Unsloth team!)
+
 ### Try QwQ with API
 
 If you face issues in deploying QwQ, we encourage you to test our API service provided by [Alibaba Cloud Model Studio](https://www.alibabacloud.com/help/en/model-studio/developer-reference/what-is-qwen-llm).
