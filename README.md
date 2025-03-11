@@ -73,9 +73,10 @@ To achieve optimal performance, we recommend the following settings:
 1. **Enforce Thoughtful Output**: Ensure the model starts with "\<think\>\n" to prevent generating empty thinking content, which can degrade output quality. If you use `apply_chat_template` and set `add_generation_prompt=True`, this is already automatically implemented, but it may cause the response to lack the \<think\> tag at the beginning. This is normal behavior.
 
 2. **Sampling Parameters**:
-   - Use Temperature=0.6, TopP=0.95, MinP=0 instead of Greedy decoding to avoid endless repetitions.
-   - Use TopK between 20 and 40 to filter out rare token occurrences while maintaining the diversity of the generated output.
-   - For supported frameworks, you can adjust the `presence_penalty` parameter between 0 and 2 to reduce endless repetitions. However, using a higher value may result in occasional language mixing and a slight decrease in performance.
+   - **We recommend using Temperature=0.6, TopP=0.95, MinP=0, TopK=40, and no repetition penalty for optimal performance.**
+   - Do **NOT** use Greedy decoding under any circumstances! It will lead to endless repetitions.
+   - You can adjust the TopK value between 20 and 40 to balance filtering out rare token occurrences and enhancing the diversity of the generated output.
+   - For supported frameworks, you can adjust the `presence_penalty` parameter between 0 and 2 to reduce endless repetitions. However, a higher value may occasionally result in language mixing and a slight decrease in performance.
 
 3. **No Thinking Content in History**: In multi-turn conversations, the historical model output should only include the final output part and does not need to include the thinking content. This feature is already implemented in `apply_chat_template`.
 
