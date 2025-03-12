@@ -23,7 +23,8 @@ QwQ is the reasoning-specialized model within the Qwen series. Unlike traditiona
 
 To reproduce the results, please refer to [our evaluation code](./eval).
 
-## Requirements
+
+## Quickstart with HuggingFace's transformers
 
 QwQ is based on Qwen2.5, which has been in the latest Huggingface `transformers`. We advise you to use the latest version of `transformers`.
 
@@ -31,8 +32,6 @@ With `transformers<4.37.0`, you will encounter the following error:
 ```
 KeyError: 'qwen2'
 ```
-
-## Quickstart
 
 Here provides a code snippet with `apply_chat_template` to show you how to load the tokenizer and model and how to generate contents.
 
@@ -101,9 +100,36 @@ To achieve optimal performance, we recommend the following settings:
     Presently, vLLM only supports static YARN, which means the scaling factor remains constant regardless of input length, **potentially impacting performance on shorter texts**. 
     We advise adding the `rope_scaling` configuration only when processing long contexts is required.
 
-6. **Other References**: For Ollama and llama.cpp users, you can consult [Unsloth's Guide](https://docs.unsloth.ai/basics/tutorial-how-to-run-qwq-32b-effectively) to see if their approach meets your needs. (Thanks to the Unsloth team!)
+## Ollama and Llama.cpp
 
-### Try QwQ with API
+To run the Qwen/QwQ-32B-GGUF model with Ollama, use the following command.
+
+```bash
+ollama run hf.co/Qwen/QwQ-32B-GGUF:Q4_K_M # select one from Q8_0; Q6_K; Q5_K_M; Q5_0; Q4_K_M; Q4_0; Q3_K_M; Q2_K.
+# For modelscope User
+ollama run modelscope.cn/Qwen/QwQ-32B-GGUF:Q4_K_M
+```
+
+If you're using Llama.cpp, you can run the model with the following command.  This example uses the ``Q4_K_M`` quantization:
+
+```bash
+./llama-cli \
+    --model QwQ-32B-GGUF/QwQ-32B-Q4_K_M.gguf \
+    --threads 32 \
+    --ctx-size 32768 \
+    --seed 1234 \
+    --temp 0.6 \
+    --min-p 0.0 \
+    --top-k 40 \
+    --top-p 0.95 \
+    -no-cnv \
+    --samplers "top_k;top_p;min_p;temperature;" \
+    --prompt "<|im_start|>user\nHow many r's are in the word \"strawberry\"<|im_end|>\n<|im_start|>assistant\n<think>\n"
+```
+
+You can also consult [Unsloth's Guide](https://docs.unsloth.ai/basics/tutorial-how-to-run-qwq-32b-effectively) to see if their approach meets your needs. (Thanks to the Unsloth team!)
+
+## Try QwQ with API
 
 If you face issues in deploying QwQ, we encourage you to test our API service provided by [Alibaba Cloud Model Studio](https://www.alibabacloud.com/help/en/model-studio/developer-reference/what-is-qwen-llm).
 
