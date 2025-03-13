@@ -114,7 +114,7 @@ If you're using Llama.cpp, you can run the model with the following command.  Th
 
 ```bash
 ./llama-cli \
-    --model QwQ-32B-GGUF/QwQ-32B-Q4_K_M.gguf \
+    --model QwQ-32B-GGUF/qwq-32b-q4_k_m.gguf \
     --threads 32 \
     --ctx-size 32768 \
     --seed 1234 \
