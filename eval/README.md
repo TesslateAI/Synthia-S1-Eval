@@ -38,8 +38,13 @@ python -m vllm.entrypoints.openai.api_server \
     --enforce-eager \
     --port 8030
 ```
+### Optional : Start SGLang server/router
+```bash
+# Use router for better data parallelism
+python -m sglang_router.launch_server --model-path Qwen/QwQ-32B --dp-size 4 --host=0.0.0.0 --port=30000
 
-Adjust the `tensor_parallel_size` parameter based on your available devices.
+```
+Also adjust the port in following commands.
 
 ### Step 2: Run Inference
 
