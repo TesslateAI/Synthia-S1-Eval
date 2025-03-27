@@ -41,7 +41,7 @@ python -m vllm.entrypoints.openai.api_server \
 Adjust the `tensor_parallel_size` parameter based on your available devices.
 ### Optional : Start SGLang server/router
 
-Since the evaluation could takes more days, we also suggested using SGLang with data parallelism to accelerate the evaluation.
+Since the evaluation could takes days, we also suggest using SGLang with data parallelism to accelerate the evaluation. Refer to [SGLang documentation](https://docs.sglang.ai/router/router.html) for more details.
 ```bash
 # Use router to support better data parallelism
 python -m sglang_router.launch_server --model-path Qwen/QwQ-32B --dp-size 4 --host=0.0.0.0 --port=30000
