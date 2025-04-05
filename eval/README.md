@@ -1,5 +1,6 @@
-# Evaluation of QwQ
+# Evaluation of Synthia S1
 
+<!--
 Currently, this repository contains the code to reproduce the following scores.
 
 | Datasets                 | QwQ-32B |
@@ -8,6 +9,7 @@ Currently, this repository contains the code to reproduce the following scores.
 | AIME25                   | 69.5    |
 | LiveCodeBench 2408-2502  | 63.4    |
 | IFeval(Strict Prompt Acc)| 83.9    |
+-->
 
 ## Evaluation
 
@@ -26,9 +28,9 @@ pip install -f requirements.txt
 First, start the vLLM server with the following command:
 
 ```bash
-model_path="Qwen/QwQ-32B" # or path to your local checkpoint
-model_name="Qwen/QwQ-32B"
-num_gpus=4
+model_path="Tesslate/Synthia-S1-27b" # or path to your local checkpoint
+model_name="Tesslate/Synthia-S1-27b"
+num_gpus=2
 
 python -m vllm.entrypoints.openai.api_server \
     --model $model_path \
@@ -39,15 +41,6 @@ python -m vllm.entrypoints.openai.api_server \
     --port 8030
 ```
 Adjust the `tensor_parallel_size` parameter based on your available devices.
-### Optional : Start SGLang server/router
-
-Since the evaluation could takes days, we also suggest using SGLang with data parallelism to accelerate the evaluation. Refer to [SGLang documentation](https://docs.sglang.ai/router/router.html) for more details.
-```bash
-# Use router to support better data parallelism
-python -m sglang_router.launch_server --model-path Qwen/QwQ-32B --dp-size 4 --host=0.0.0.0 --port=30000
-
-```
-Adjust the `dp_size` parameter based on your available devices. Also adjust the port in following commands.
 
 ### Step 2: Run Inference
 
@@ -57,16 +50,16 @@ After starting the vLLM service, run the inference script to generate responses.
 mkdir -p output
 
 # aime24 (repeated sample 64 times)
-python ./generate_api_answers/infer_multithread.py --input_file "./data/aime24.jsonl" --output_file "./output/aime24_bz64.jsonl"  --base_url "http://127.0.0.1:8030/v1" --model_name "Qwen/QwQ-32B"
+python ./generate_api_answers/infer_multithread.py --input_file "./data/aime24.jsonl" --output_file "./output/aime24_bz64.jsonl"  --base_url "http://127.0.0.1:8030/v1" --model_name "Tesslate/Synthia-S1-27b"
 
 # aime25 (repeated sample 64 times)
-python ./generate_api_answers/infer_multithread.py --input_file "./data/aime25.jsonl" --output_file "./output/aime25_bz64.jsonl"  --base_url "http://127.0.0.1:8030/v1" --model_name "Qwen/QwQ-32B"
+python ./generate_api_answers/infer_multithread.py --input_file "./data/aime25.jsonl" --output_file "./output/aime25_bz64.jsonl"  --base_url "http://127.0.0.1:8030/v1" --model_name "Tesslate/Synthia-S1-27b"
 
 # livebench 2408-2502 (repeated sample 8 times)
-python ./generate_api_answers/infer_multithread.py --input_file "./data/livecodebench_v5.jsonl" --output_file "./output/livecodebench_v5_bz8.jsonl"  --base_url "http://127.0.0.1:8030/v1" --model_name "Qwen/QwQ-32B" --n_samples 8
+python ./generate_api_answers/infer_multithread.py --input_file "./data/livecodebench_v5.jsonl" --output_file "./output/livecodebench_v5_bz8.jsonl"  --base_url "http://127.0.0.1:8030/v1" --model_name "Tesslate/Synthia-S1-27b" --n_samples 8
 
 # IFEval
-python ./generate_api_answers/infer_multithread.py --input_file "./data/ifeval.jsonl" --output_file "./output/ifeval_bz1.jsonl"  --base_url "http://127.0.0.1:8030/v1" --model_name "Qwen/QwQ-32B" --n_samples 1
+python ./generate_api_answers/infer_multithread.py --input_file "./data/ifeval.jsonl" --output_file "./output/ifeval_bz1.jsonl"  --base_url "http://127.0.0.1:8030/v1" --model_name "Tesslate/Synthia-S1-27b" --n_samples 1
 ```
 
 **Note:** We apply repeated sampling to reduce evaluation variance, but it may take a long time to complete (more than 8 hours depending on your device).
@@ -85,7 +78,7 @@ python ./generate_api_answers/infer_multithread.py --input_file "./data/ifeval.j
 
 #### Sampling Parameters
 
-We use ``top_p=0.95``, ``temperature=0.6``, ``top_k=40``, ``max_tokens=32768`` for sampling.
+We use `top_p=0.95`, `temperature=1.0`, `top_k=64`, `repetition_penalty=1.3`, `min_p=0.0`, `max_tokens=16384` for sampling.
 
 #### Resuming Interrupted Inference
 
