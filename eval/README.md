@@ -28,15 +28,18 @@ pip install -r requirements.txt
 First, start the vLLM server with the following command:
 
 ```bash
-model_path="Tesslate/Synthia-S1-27b" # or path to your local checkpoint
-model_name="Tesslate/Synthia-S1-27b"
-num_gpus=2
+git clone https://github.com/vllm-project/vllm.git
+cd vllm
+VLLM_USE_PRECOMPILED=1 pip install --editable .
+
+pip install git+https://github.com/huggingface/transformers@v4.49.0-Gemma-3
+cd ..
 
 python -m vllm.entrypoints.openai.api_server \
-    --model $model_path \
+    --model Tesslate/Synthia-S1-27b \
     --trust-remote-code \
-    --served-model-name $model_name \
-    --tensor-parallel-size $num_gpus \
+    --served-model-name Tesslate/Synthia-S1-27b \
+    --tensor-parallel-size 2 \
     --enforce-eager \
     --port 8030
 ```
