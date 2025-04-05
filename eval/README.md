@@ -20,7 +20,7 @@ Ensure you have Python >= 3.9 installed along with GPU devices totaling at least
 Install the dependencies using:
 
 ```bash
-pip install -f requirements.txt
+pip install -r requirements.txt
 ```
 
 ### Step 1: Start vLLM Server
