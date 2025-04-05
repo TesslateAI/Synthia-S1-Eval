@@ -7,11 +7,11 @@ tqdm
 datasets==2.14.6
 
 # math_eval
-sympy==1.12
+sympy
 word2number
 Pebble
 timeout-decorator
-latex2sympy2==1.9.1
+latex2sympy2
 
 # livecodebench
 psutil
