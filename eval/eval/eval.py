@@ -8,11 +8,12 @@ from livecodebench_v5 import compute_scores as compute_scores_livecodebench_v5
 from ifeval import compute_scores as compute_scores_ifeval
 
 def get_after_think(text):
-    parts = text.split("\n</think>\n\n", 1)
-    if len(parts) > 1:
-        return parts[1]
+    if "<|end_of_thought|>" in text:
+        part = text.split("<|end_of_thought|>")[-1]
+        return part
     else:
         return text
+
 def main():
     parser = argparse.ArgumentParser(description="Evaluate model outputs")
     parser.add_argument("--input_path", type=str, required=True, help="Path to input jsonl file")
