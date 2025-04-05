@@ -30,9 +30,11 @@ def get_content(query, base_url, model_name):
     call_args = dict(
             model=model_name,
             messages=messages,
-            temperature=0.6,
+            temperature=1.0,
             top_p=0.95,
-            max_tokens=32768,
+            repetition_penalty=1.3,
+            min_p=0.0,
+            max_tokens=16384,
         )
     if IS_OPENAI_V1:
             call_args['extra_body'] = {}
@@ -40,7 +42,7 @@ def get_content(query, base_url, model_name):
     else:
         extra_args_dict = call_args
     extra_args_dict.update({
-        'top_k': 40,
+        'top_k': 64,
     })
     
     if IS_OPENAI_V1:
@@ -78,7 +80,7 @@ def get_content(query, base_url, model_name):
 if __name__ == "__main__":
     conversation_history = []
     user_input = "Hello!"
-    res = get_content(user_input, "http://10.77.249.36:8030/v1", "Qwen/QwQ")
+    res = get_content(user_input, "http://127.0.0.1:8030/v1", "Tesslate/Synthia-S1-27b")
     print(f"Response: {res}")
 
     user_input = "How are you?"
