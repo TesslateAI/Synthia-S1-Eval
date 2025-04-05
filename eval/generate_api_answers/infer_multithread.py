@@ -47,8 +47,8 @@ def main():
     parser.add_argument("--output_file", type=str, required=True, help="Output file path")
     parser.add_argument("--n_samples", type=int, default=64, help="Number of samples per prompt")
     parser.add_argument("--max_workers", type=int, default=128, help="Maximum number of worker threads")
-    parser.add_argument("--base_url", type=str, default='http://10.77.249.36:8030/v1', help="base url of vllm server")
-    parser.add_argument("--model_name", type=str, default='Qwen/QwQ-32B', help="model name of vllm server")
+    parser.add_argument("--base_url", type=str, default='http://127.0.0.1:8030/v1', help="base url of vllm server")
+    parser.add_argument("--model_name", type=str, default='Tesslate/Synthia-S1-27b', help="model name of vllm server")
     args = parser.parse_args()
 
     with open(args.input_file, 'r', encoding='utf-8') as f:
