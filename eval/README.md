@@ -28,12 +28,11 @@ pip install -r requirements.txt
 First, start the vLLM server with the following command:
 
 ```bash
+pip install git+https://github.com/huggingface/transformers@v4.49.0-Gemma-3
+
 git clone https://github.com/vllm-project/vllm.git
 cd vllm
 VLLM_USE_PRECOMPILED=1 pip install --editable .
-
-pip install git+https://github.com/huggingface/transformers@v4.49.0-Gemma-3
-cd ..
 
 python -m vllm.entrypoints.openai.api_server \
     --model Tesslate/Synthia-S1-27b \
