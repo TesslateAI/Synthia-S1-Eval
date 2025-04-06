@@ -1,84 +1,96 @@
+import json
+import argparse
+from tqdm import tqdm
+import copy
+import concurrent.futures
+import threading
 import os
-import time
-import random
-import openai
-import logging
-from packaging.version import parse as parse_version
+import collections
 
-IS_OPENAI_V1 = parse_version(openai.__version__) >= parse_version('1.0.0')
+from utils_vllm import get_content
 
-SYNTHIA_SYS_PROMPT = "Your role as an assistant involves thoroughly exploring questions through a systematic long thinking process before providing the final precise and accurate solutions. This requires engaging in a comprehensive cycle of analysis, summarizing, exploration, reassessment, reflection, backtracing, and iteration to develop well-considered thinking process. Please structure your response into two main sections: Thought and Solution. In the Thought section, detail your reasoning process using the specified format: <|begin_of_thought|> {thought with steps separated with '\n\n'} <|end_of_thought|> Each step should include detailed considerations such as analisying questions, summarizing relevant findings, brainstorming new ideas, verifying the accuracy of the current steps, refining any errors, and revisiting previous steps. In the Solution section, based on various attempts, explorations, and reflections from the Thought section, systematically present the final solution that you deem correct. The solution should remain a logical, accurate, concise expression style and detail necessary step needed to reach the conclusion, formatted as follows: <|begin_of_solution|> {final formatted, precise, and clear solution} <|end_of_solution|> Now, try to solve the following question through the above guidelines:"
+file_lock = threading.Lock()
 
-if IS_OPENAI_V1:
-    from openai import APIError, APIConnectionError, RateLimitError
-else:
-    from openai.error import APIError, APIConnectionError, RateLimitError
+def count_completed_samples(output_file):
+    prompt_counts = collections.defaultdict(int)
+    if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
+        with open(output_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                try:
+                    item = json.loads(line)
+                    prompt = item['prompt']
+                    gen_count = len(item.get('gen', []))
+                    prompt_counts[prompt] += gen_count
+                except json.JSONDecodeError:
+                    continue
+    return prompt_counts
 
-class ClientError(RuntimeError):
-    pass
-def get_content(query, base_url, model_name):
-    API_KEY = os.environ.get("OPENAI_API_KEY", "EMPTY")
-    API_REQUEST_TIMEOUT = int(os.getenv('OPENAI_API_REQUEST_TIMEOUT', '99999'))
-    if IS_OPENAI_V1:
-        import httpx
-        client = openai.OpenAI(
-            api_key=API_KEY,
-            base_url=base_url,
-            timeout=httpx.Timeout(API_REQUEST_TIMEOUT),
-        )
-    else:
-        client = None
-    messages = [{'role': 'system', 'content': SYNTHIA_SYS_PROMPT}, {'role': 'user', 'content': query}]
-    call_args = dict(
-            model=model_name,
-            messages=messages,
-            temperature=1.0,
-            top_p=0.95,
-            max_tokens=16384,
-        )
-    if IS_OPENAI_V1:
-            call_args['extra_body'] = {}
-            extra_args_dict = call_args['extra_body']
-    else:
-        extra_args_dict = call_args
-    extra_args_dict.update({
-        'top_k': 64,
-    })
+def process_item(item, output_file, base_url, model_name):
+    result = copy.deepcopy(item)
+
+    response = get_content(item['prompt'], base_url, model_name)
+
+    if 'gen' not in result:
+        result['gen'] = []
     
-    if IS_OPENAI_V1:
-        call_func = client.chat.completions.create
-        call_args['timeout'] = API_REQUEST_TIMEOUT
-    else:
-        call_func = openai.ChatCompletion.create
-        call_args['api_key'] = API_KEY
-        call_args['api_base'] = base_url
-        call_args['request_timeout'] = API_REQUEST_TIMEOUT
-
-    result = ''
-    try:
-        completion = call_func(**call_args, )
-        result = completion.choices[0].message.content              
-    except AttributeError as e:
-        err_msg = getattr(completion, "message", "")
-        if err_msg:
-            time.sleep(random.randint(25, 35))
-            raise ClientError(err_msg) from e
-        raise ClientError(err_msg) from e
-    except (APIConnectionError, RateLimitError) as e:
-        err_msg = e.message if IS_OPENAI_V1 else e.user_message
-        time.sleep(random.randint(25, 35))
-        raise ClientError(err_msg) from e
-    except APIError as e:
-        err_msg = e.message if IS_OPENAI_V1 else e.user_message
-        if "maximum context length" in err_msg:  # or "Expecting value: line 1 column 1 (char 0)" in err_msg:
-            logging.warn(f"max length exceeded. Error: {err_msg}")
-            return {'gen': "", 'end_reason': "max length exceeded"}
-        time.sleep(1)
-        raise ClientError(err_msg) from e
+    result['gen'].append(response)
+    with file_lock:
+        with open(output_file, 'a', encoding='utf-8') as g:
+            g.write(json.dumps(result, ensure_ascii=False) + '\n')
+            g.flush()
+    
     return result
 
+def main():
+    parser = argparse.ArgumentParser(description="Run inference on model with prompts from a jsonl file")
+    parser.add_argument("--input_file", type=str, required=True, help="Input jsonl file path")
+    parser.add_argument("--output_file", type=str, required=True, help="Output file path")
+    parser.add_argument("--n_samples", type=int, default=64, help="Number of samples per prompt")
+    parser.add_argument("--max_workers", type=int, default=128, help="Maximum number of worker threads")
+    parser.add_argument("--base_url", type=str, default='http://127.0.0.1:8030/v1', help="base url of vllm server")
+    parser.add_argument("--model_name", type=str, default='Tesslate/Synthia-S1-27b', help="model name of vllm server")
+    args = parser.parse_args()
+
+    with open(args.input_file, 'r', encoding='utf-8') as f:
+        data = [json.loads(l) for l in f]
+    
+    if os.path.exists(args.output_file):
+        completed_counts = count_completed_samples(args.output_file)
+        total_completed = sum(completed_counts.values())
+        print(f"Found {total_completed} completed samples from previous run")
+    else:
+        with open(args.output_file, 'w', encoding='utf-8') as g:
+            completed_counts = dict()
+
+    expanded_data = []
+    for item in data:
+        prompt = item['prompt']
+        completed = completed_counts.get(prompt, 0)
+        remaining = args.n_samples - completed
+        for _ in range(remaining):
+            expanded_data.append(copy.deepcopy(item))
+    
+    total_tasks = len(expanded_data)
+    print(f"Total remaining samples to process: {total_tasks}")
+
+    completed_count = 0
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.max_workers) as executor:
+        future_to_item = {executor.submit(process_item, item, args.output_file, args.base_url, args.model_name): i 
+                          for i, item in enumerate(expanded_data)}
+        
+        with tqdm(total=len(expanded_data), desc="Processing samples") as pbar:
+            for future in concurrent.futures.as_completed(future_to_item):
+                idx = future_to_item[future]
+                try:
+                    future.result()  
+                    completed_count += 1
+                except Exception as exc:
+                    print(f'Error processing sample {idx}: {exc}')
+                pbar.update(1)
+    
+    print(f"Completed {completed_count}/{len(expanded_data)} samples")
+    print(f"Results saved to {args.output_file}")
+
 if __name__ == "__main__":
-    conversation_history = []
-    user_input = "Hello!"
-    res = get_content(user_input, "http://127.0.0.1:8030/v1", "Tesslate/Synthia-S1-27b")
-    print(f"Response: {res}")
+    main()
