@@ -20,12 +20,12 @@ def main():
     while True:
         count = count_jsonl_items(file_path)
         if count is not None:
-            table = [['Time', 'Count', 'Change'],
-                     [time.strftime('%Y-%m-%d %H:%M:%S'), count, count - previous_count if previous_count is not None else 'N/A']]
+            table = [['Time', 'Count', '% Complete'],
+                     [time.strftime('%Y-%m-%d %H:%M:%S'), count, f"{(count/1920)*100:.2f}%"]]
             os.system('clear')
             print(tabulate(table, headers='firstrow', tablefmt='rounded_grid'))
             previous_count = count
-        time.sleep(60)  # Wait for 1 minute
+        time.sleep(5)  # Wait for 5 seconds
 
 if __name__ == "__main__":
     main()
