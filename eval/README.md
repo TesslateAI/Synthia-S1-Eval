@@ -34,6 +34,8 @@ cd vllm
 
 VLLM_USE_PRECOMPILED=1 pip install --editable .
 
+pip install git+https://github.com/huggingface/transformers@v4.49.0-Gemma-3
+
 # RUN THIS INSIDE the 'vllm' folder! (2 GPUs)
 python -m vllm.entrypoints.openai.api_server \
     --model Tesslate/Synthia-S1-27b \
