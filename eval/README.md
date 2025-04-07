@@ -34,11 +34,20 @@ git clone https://github.com/vllm-project/vllm.git
 cd vllm
 VLLM_USE_PRECOMPILED=1 pip install --editable .
 
+# 2 GPUs
 python -m vllm.entrypoints.openai.api_server \
     --model Tesslate/Synthia-S1-27b \
     --trust-remote-code \
     --served-model-name Tesslate/Synthia-S1-27b \
     --tensor-parallel-size 2 \
+    --enforce-eager \
+    --port 8030
+
+# Or One
+python -m vllm.entrypoints.openai.api_server \
+    --model Tesslate/Synthia-S1-27b \
+    --trust-remote-code \
+    --served-model-name Tesslate/Synthia-S1-27b \
     --enforce-eager \
     --port 8030
 ```
