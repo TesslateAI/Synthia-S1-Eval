@@ -43,6 +43,8 @@ def get_content(query, base_url, model_name):
         extra_args_dict = call_args
     extra_args_dict.update({
         'top_k': 64,
+        'repetition_penalty': 1.3,
+        'min_p': 0.0,
     })
     
     if IS_OPENAI_V1:
